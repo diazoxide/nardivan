@@ -1,0 +1,30 @@
+{
+  "name": "novembit/nardivan",
+  "description": "Nardivan",
+  "keywords": [
+
+  ],
+  "license": "GPL-3.0-or-later",
+  "minimum-stability": "dev",
+  "require": {
+    "php": ">=7.0",
+    "ext-dom": "*",
+    "ext-libxml": "*",
+    "ext-pdo": "*",
+    "ext-json": "*",
+    "ext-curl": "*"
+  },
+  "require-dev": {
+  },
+  "autoload": {
+    "psr-4": {
+      "NovemBit\\nardivan\\": "src/"
+    }
+  },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://asset-packagist.org"
+    }
+  ]
+}
