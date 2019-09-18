@@ -7,7 +7,7 @@
     ```
 2. Extract archive
     ```bash
-    wget -O nardivan.tar.gz https://github.com/diazoxide/nardivan/archive/master.tar.gz
+    sudo wget -O nardivan.tar.gz https://github.com/diazoxide/nardivan/archive/master.tar.gz
     sudo mkdir -p /var/lib/nardivan
     sudo rm -rf /var/lib/nardivan/* 
     sudo tar -xvf nardivan.tar.gz -C /var/lib/nardivan 
