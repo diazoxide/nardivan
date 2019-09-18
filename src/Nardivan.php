@@ -2,8 +2,6 @@
 
 namespace NovemBit\nardivan;
 
-use Composer\Composer;
-
 class Nardivan
 {
 
