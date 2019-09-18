@@ -8,5 +8,9 @@
     ```
 2. Extract archive
     ```bash
-    mkdir -p /var/lib/nardivan | sudo tar -xvf nardivan.tar.gz -C /var/lib/nardivan | sudo chmod +x /var/lib/nardivan/nardivan-master/nardivan | sudo ln -sfn /var/lib/nardivan/nardivan-master/nardivan /usr/bin/nardivan
+   sudo mkdir -p /var/lib/nardivan &
+   sudo rm -rf /var/lib/nardivan/* & 
+   sudo tar -xvf nardivan.tar.gz -C /var/lib/nardivan & 
+   sudo chmod +x /var/lib/nardivan/nardivan-master/nardivan & 
+   sudo ln -sfn /var/lib/nardivan/nardivan-master/nardivan /usr/bin/nardivan
     ```
