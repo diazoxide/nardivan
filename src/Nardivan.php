@@ -124,7 +124,8 @@ class Nardivan
     }
 
 
-    private function createComposerConfig(){
+    private function createComposerConfig()
+    {
         /*
          * Building composer config file
          * */
@@ -150,6 +151,7 @@ class Nardivan
 
         file_put_contents($composer_json_path, $json);
     }
+
     private function update()
     {
         self::print("=> Update repos:");
@@ -167,48 +169,49 @@ class Nardivan
         /*
          * Running composer update command
          * */
-        exec('php composer.phar update',$output, $result);
+        exec('php composer.phar update', $output, $result);
 
-        /*
-         * Changing current directory to root of project
-         * */
-        chdir($this->pwd);
 
         /**
          * Creating symlinks for repos on target folder
          *
-         * @var Repo $repo */
+         * @var Repo $repo
+         */
         foreach ($this->repos as $repo) {
 
-            self::print("===> Linking repo: ".$repo->name);
+            /*
+             * Changing current directory to root of project
+             * */
+            chdir($this->pwd);
+            self::print("===> Linking repo: " . $repo->name);
+
             /*
              * Building repo relative directory path
              * */
-            $repo_dir = $this->composer_dir."/vendor/nardivan/".$repo->name;
+            $repo_dir = $this->composer_dir . "/vendor/nardivan/" . $repo->name;
 
             /*
              * Building target relative path
              * */
-            $target =  $this->directory . $repo->target;
+            $target = $this->directory . $repo->target;
 
             /*
              * Split path, to get count of path parts
              * And then unset target name from path
              * */
-            $target_parts = explode('/',$target);
+            $target_parts = explode('/', $target);
 
             /*
              * Building backtrace relative path prefix
              * */
-            $repo_dir_prefix = str_repeat("../",count($target_parts)-1);
-            $repo_dir = './'.$repo_dir_prefix.$repo_dir.'/';
+            $repo_dir_prefix = str_repeat("../", count($target_parts) - 1);
+            $repo_dir = './' . $repo_dir_prefix . $repo_dir . '/';
 
             /*
              * Unset target name from target path to get target directory
              * */
-            unset($target_parts[count($target_parts)-1]);
-            $target_dir= implode('/',$target_parts);
-
+            unset($target_parts[count($target_parts) - 1]);
+            $target_dir = implode('/', $target_parts);
             /*
              * Changing current directory to target directory
              * */
@@ -217,11 +220,13 @@ class Nardivan
             /*
              * Remove old symlink or directory
              * */
-            unlink($repo->name);
+            if (file_exists($repo->name)) {
+                unlink($repo->name);
+            }
             /*
              * Creating symlink
              * */
-            exec('ln -s '.$repo_dir);
+            exec('ln -s ' . $repo_dir);
         }
 
     }
