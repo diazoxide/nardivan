@@ -167,18 +167,20 @@ class Nardivan
         /*
          * Running composer update command
          * */
-        exec('php composer.phar update');
+        exec('php composer.phar update',$output, $result);
 
         /*
          * Changing current directory to root of project
          * */
         chdir($this->pwd);
 
-        /*
+        /**
          * Creating symlinks for repos on target folder
-         * */
+         *
+         * @var Repo $repo */
         foreach ($this->repos as $repo) {
 
+            self::print("===> Linking repo: ".$repo->name);
             /*
              * Building repo relative directory path
              * */
@@ -212,6 +214,10 @@ class Nardivan
              * */
             chdir($target_dir);
 
+            /*
+             * Remove old symlink or directory
+             * */
+            unlink($repo->name);
             /*
              * Creating symlink
              * */
