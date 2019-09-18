@@ -2,6 +2,8 @@
 
 namespace NovemBit\nardivan;
 
+use InvalidArgumentException;
+
 class Nardivan
 {
 
@@ -123,6 +125,10 @@ class Nardivan
         }
     }
 
+    private static function deleteDir($dirPath) {
+        system("rm -rf ".escapeshellarg($dirPath));
+
+    }
 
     private function createComposerConfig()
     {
@@ -221,7 +227,11 @@ class Nardivan
              * Remove old symlink or directory
              * */
             if (file_exists($repo->name)) {
-                unlink($repo->name);
+                if(is_dir($repo->name)){
+                    self::deleteDir($repo->name);
+                }else {
+                    unlink($repo->name);
+                }
             }
             /*
              * Creating symlink
