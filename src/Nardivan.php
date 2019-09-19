@@ -115,7 +115,7 @@ html;
      */
     private function install()
     {
-        self::print("=> Installing nardivan:");
+        self::print("=> Installing nardivan: ", false, 'yellow');
 
         if (!file_exists($this->instance_directory) && !is_dir($this->instance_directory)) {
             mkdir($this->instance_directory);
@@ -124,7 +124,8 @@ html;
         if (!file_exists($this->composer_dir) && !is_dir($this->composer_dir)) {
             mkdir($this->composer_dir);
         }
-        self::print("<= Nardivan install: success.");
+
+        self::print("success", true, 'light_green');
     }
 
     /**
@@ -187,7 +188,7 @@ html;
         $application = new Application();
         $application->setAutoExit(false);
         $application->run($input);
-        self::print("success", true, 'green');
+        self::print("success", true, 'light_green');
 
     }
 
