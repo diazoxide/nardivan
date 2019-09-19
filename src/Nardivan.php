@@ -142,6 +142,7 @@ class Nardivan
      */
     private function createComposerConfig()
     {
+        self::print('==> Generate composer config file.');
         /*
          * Building composer config file
          * */
@@ -186,6 +187,7 @@ class Nardivan
          * */
         chdir($this->composer_dir);
 
+        self::print("==> Update composer");
         /*
          * Running composer update command
          * */
