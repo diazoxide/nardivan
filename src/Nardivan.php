@@ -151,9 +151,9 @@ class Nardivan
         ];
 
         /** @var Repo $repo */
-        foreach ($this->repos as $repo) {
+        foreach ($this->repos as $key=> $repo) {
 
-            self::print($repo->name . " ==> " . $repo->target);
+            self::print('===>'.$key.'. '.$repo->name . " -> " . $repo->target);
 
             $composer_repo_config = $repo->getComposerConfig();
             $composer_config['repositories'][] = $composer_repo_config;
@@ -197,7 +197,7 @@ class Nardivan
          *
          * @var Repo $repo
          */
-        foreach ($this->repos as $repo) {
+        foreach ($this->repos as $key => $repo) {
 
             /*
              * Changing current directory to root of project
