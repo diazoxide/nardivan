@@ -2,8 +2,6 @@
 
 namespace NovemBit\nardivan;
 
-use InvalidArgumentException;
-
 class Nardivan
 {
 
@@ -15,7 +13,6 @@ class Nardivan
 
     public $instance_directory = ".nardivan";
 
-    public $use_symlink_structure;
     /**
      * @var string
      */
@@ -79,6 +76,11 @@ class Nardivan
         return true;
     }
 
+    /**
+     * Install command
+     * Creating instance directories
+     * Running composer installation
+     */
     private function install()
     {
         self::print("=> Installing nardivan:");
@@ -100,7 +102,7 @@ class Nardivan
     }
 
     /**
-     *
+     * Install composer.phar on instance directory
      */
     private function installComposer()
     {
@@ -125,11 +127,19 @@ class Nardivan
         }
     }
 
-    private static function deleteDir($dirPath) {
-        system("rm -rf ".escapeshellarg($dirPath));
+    /**
+     * Delete directory with contain files
+     * @param $dirPath
+     */
+    private static function deleteDir($dirPath)
+    {
+        system("rm -rf " . escapeshellarg($dirPath));
 
     }
 
+    /**
+     * Generating composer.json
+     */
     private function createComposerConfig()
     {
         /*
@@ -158,6 +168,10 @@ class Nardivan
         file_put_contents($composer_json_path, $json);
     }
 
+    /**
+     * Update command
+     * To update all repos and create symlinks
+     */
     private function update()
     {
         self::print("=> Update repos:");
@@ -189,6 +203,7 @@ class Nardivan
              * Changing current directory to root of project
              * */
             chdir($this->pwd);
+
             self::print("===> Linking repo: " . $repo->name);
 
             /*
@@ -227,9 +242,9 @@ class Nardivan
              * Remove old symlink or directory
              * */
             if (file_exists($repo->name)) {
-                if(is_dir($repo->name)){
+                if (is_dir($repo->name)) {
                     self::deleteDir($repo->name);
-                }else {
+                } else {
                     unlink($repo->name);
                 }
             }
@@ -239,13 +254,23 @@ class Nardivan
             exec('ln -s ' . $repo_dir);
         }
 
+        self::print("Update successful.");
     }
 
+    /**
+     * Help Command get all commands list
+     */
     private function help()
     {
         self::print("Please choose command.");
+        self::print("install: First time run, to create instances directories.");
+        self::print("update: Updates repos and create symlinks");
+        /*Todo: create commands list*/
     }
 
+    /**
+     * Creating repos objects
+     */
     private function fetchRepos()
     {
         foreach ($this->repos as &$repo) {
