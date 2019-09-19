@@ -2,9 +2,20 @@
 
 namespace NovemBit\nardivan;
 
+
+use Composer\Console\Application;
+use Exception;
+use Symfony\Component\Console\Input\ArrayInput;
+
 class Nardivan
 {
 
+    public $logo = <<<html
+  _  _                _  _                  
+ | \| | __ _  _ _  __| |(_)__ __ __ _  _ _  
+ | .` |/ _` || '_|/ _` || |\ V // _` || ' \ 
+ |_|\_|\__,_||_|  \__,_||_| \_/ \__,_||_||_|
+html;
     public $pwd;
 
     public $repos;
@@ -20,6 +31,7 @@ class Nardivan
 
     /**
      * nardivan constructor.
+     * @throws Exception
      */
     public function __construct()
     {
@@ -52,14 +64,34 @@ class Nardivan
 
     /**
      * @param $text
+     * @param bool $newline
+     * @param null $color
+     * @param null $background
+     * @param bool $return
+     * @return string
      */
-    private static function print($text)
+    private static function print($text, $newline = true, $color = null, $background = null, $return = false)
     {
-        echo $text . PHP_EOL;
+        $suffix = str_repeat(PHP_EOL, (int)$newline);
+        $text = $text . $suffix;
+
+        $text = Output::getColoredString($text, $color, $background);
+
+        if (!$return) {
+            echo $text;
+        }
+        return $text;
     }
 
+    /**
+     * @return bool
+     * @throws Exception
+     */
     private function init()
     {
+
+        self::print($this->logo, 3, 'red');
+
         $this->fetchRepos();
 
         $this->composer_dir = $this->instance_directory . '/composer';
@@ -92,49 +124,17 @@ class Nardivan
         if (!file_exists($this->composer_dir) && !is_dir($this->composer_dir)) {
             mkdir($this->composer_dir);
         }
-
-        unset($_SERVER['argv'][1]);
-
-        $this->installComposer();
-
-        self::print("<= Nardivan install: successful.");
-
-    }
-
-    /**
-     * Install composer.phar on instance directory
-     */
-    private function installComposer()
-    {
-        self::print("==> Installing composer:");
-
-        chdir($this->composer_dir);
-
-        copy('https://getcomposer.org/installer', 'composer-setup.php');
-        if (hash_file('sha384',
-                'composer-setup.php') === 'a5c698ffe4b8e849a443b120cd5ba38043260d5c4023dbf93e1558871f1f07f58274fc6f4c93bcfd858c6bd0775cd8d1') {
-        } else {
-            unlink('composer-setup.php');
-            return;
-        }
-
-        exec('php composer-setup.php');
-
-        unlink('composer-setup.php');
-
-        if (file_exists('composer.phar')) {
-            self::print('==> Composer installed: successful.');
-        }
+        self::print("<= Nardivan install: success.");
     }
 
     /**
      * Delete directory with contain files
+     *
      * @param $dirPath
      */
     private static function deleteDir($dirPath)
     {
-        system("rm -rf " . escapeshellarg($dirPath));
-
+        exec("rm -rf " . escapeshellarg($dirPath));
     }
 
     /**
@@ -142,7 +142,7 @@ class Nardivan
      */
     private function createComposerConfig()
     {
-        self::print('==> Generate composer config file.');
+        self::print('==> Generate composer config file.', true, 'yellow');
         /*
          * Building composer config file
          * */
@@ -154,7 +154,7 @@ class Nardivan
         /** @var Repo $repo */
         foreach ($this->repos as $key => $repo) {
 
-            self::print('===> ' . $key . '. ' . $repo->name . " -> " . $repo->target);
+            self::print('===> ' . ($key + 1) . '. ' . $repo->name . " -> " . $repo->target, true, 'light_blue');
 
             $composer_repo_config = $repo->getComposerConfig();
             $composer_config['repositories'][] = $composer_repo_config;
@@ -162,6 +162,9 @@ class Nardivan
 
         }
 
+        /*
+         * Generate json config file
+         * */
         $json = json_encode($composer_config, JSON_PRETTY_PRINT);
 
         $composer_json_path = $this->composer_dir . '/composer.json';
@@ -170,12 +173,33 @@ class Nardivan
     }
 
     /**
+     * Running composer update command programmatically
+     *
+     * @param $command
+     * @throws Exception
+     */
+    public function runComposerCommand($command)
+    {
+        self::print("==> Update composer : ", false, 'yellow');
+        putenv('COMPOSER_HOME=' . __DIR__ . '/../vendor/bin/composer');
+        // call `composer install` command programmatically
+        $input = new ArrayInput(array('command' => $command, '--quiet'));
+        $application = new Application();
+        $application->setAutoExit(false);
+        $application->run($input);
+        self::print("success", true, 'green');
+
+    }
+
+    /**
      * Update command
+     *
      * To update all repos and create symlinks
+     * @throws Exception
      */
     private function update()
     {
-        self::print("=> Update repos:");
+        self::print("=> Update repos:", true, 'light_green');
 
         /*
          * Create composer.json file
@@ -187,12 +211,12 @@ class Nardivan
          * */
         chdir($this->composer_dir);
 
-        self::print("==> Update composer");
         /*
-         * Running composer update command
+         * Run programmatically composer update command
          * */
-        exec('php composer.phar update', $output, $result);
+        $this->runComposerCommand('update');
 
+        self::print("==> Linking repos:", true, 'yellow');
 
         /**
          * Creating symlinks for repos on target folder
@@ -206,7 +230,7 @@ class Nardivan
              * */
             chdir($this->pwd);
 
-            self::print("===> Linking repo: " . $repo->name);
+            self::print("===> " . ($key + 1) . ' ' . $repo->name, true, 'light_blue');
 
             /*
              * Building repo relative directory path
@@ -255,8 +279,9 @@ class Nardivan
              * */
             exec('ln -s ' . $repo_dir);
         }
+        self::print("==> Linking repos: success", true, 'green');
 
-        self::print("Update successful.");
+        self::print("<= Update repos: success", true, 'green');
     }
 
     /**

@@ -8,6 +8,7 @@
   "minimum-stability": "dev",
   "require": {
     "php": ">=7.0",
+    "composer/composer": "dev-master",
     "ext-dom": "*",
     "ext-libxml": "*",
     "ext-pdo": "*",
