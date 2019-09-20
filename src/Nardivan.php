@@ -24,6 +24,9 @@ html;
 
     public $instance_directory = ".nardivan";
 
+    public $scripts;
+
+
     /**
      * @var string
      */
@@ -70,7 +73,7 @@ html;
      * @param bool $return
      * @return string
      */
-    private static function print($text, $newline = true, $color = null, $background = null, $return = false)
+    public static function print($text, $newline = true, $color = null, $background = null, $return = false)
     {
         $suffix = str_repeat(PHP_EOL, (int)$newline);
         $text = $text . $suffix;
@@ -90,7 +93,7 @@ html;
     private function init()
     {
 
-        self::print($this->logo, 3, 'red');
+        self::print($this->logo, 3, 'yellow');
 
         $this->fetchRepos();
 
@@ -150,7 +153,15 @@ html;
         $composer_config = [
             'name' => 'nardivan/' . md5(time()),
             'description' => md5(time()),
+            'scripts'=>[
+                'post-package-update'=>PackageInstaller::class."::postPackageUpdate",
+                'post-package-install'=>PackageInstaller::class."::postPackageUpdate"
+            ]
         ];
+
+        if (isset($this->scripts)) {
+            $composer_config['scripts'] = $this->scripts;
+        }
 
         /** @var Repo $repo */
         foreach ($this->repos as $key => $repo) {
@@ -182,9 +193,9 @@ html;
     public function runComposerCommand($command)
     {
         self::print("==> Update composer : ", false, 'yellow');
-        putenv('COMPOSER_HOME=' . __DIR__ . '/../vendor/bin/composer');
+        putenv('COMPOSER_HOME=' . 'cache');
         // call `composer install` command programmatically
-        $input = new ArrayInput(array('command' => $command, '--quiet'));
+        $input = new ArrayInput(array('command' => $command/*, '--quiet'*/));
         $application = new Application();
         $application->setAutoExit(false);
         $application->run($input);
