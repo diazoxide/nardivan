@@ -153,15 +153,13 @@ html;
      */
     private static function deleteFile($file)
     {
-        if (!file_exists($file)) {
-            return true;
-        }
-        if (is_dir($file)) {
+        if(is_link($file)){
+            unlink($file);
+        }elseif (is_dir($file)) {
             self::rrmdir($file);
         } else {
             unlink($file);
         }
-
         return true;
 
     }
