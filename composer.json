@@ -13,7 +13,8 @@
     "ext-libxml": "*",
     "ext-pdo": "*",
     "ext-json": "*",
-    "ext-curl": "*"
+    "ext-curl": "*",
+    "ext-readline": "*"
   },
   "require-dev": {
   },

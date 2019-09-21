@@ -1,10 +1,10 @@
 <?php
 
-use NovemBit\nardivan\Nardivan;
+use NovemBit\nardivan\Run;
 
 include "vendor/autoload.php";
 
 $config = [];
 
-$nardivan = new Nardivan();
+$nardivan = new Run();
 

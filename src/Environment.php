@@ -6,23 +6,24 @@ namespace NovemBit\nardivan;
 
 class Environment
 {
-    public $target;
+    private $target;
 
-    public $package;
+    private $name;
+
+    private $git;
+
+    private $scripts;
 
     public function __construct(array $config)
     {
-        $this->setPackage($config['package']);
-        $this->setTarget($config['target']);
-    }
+        $this->setName($config['name'] ?? null);
 
-    public function getComposerRepository()
-    {
+        $this->setTarget($config['target'] ?? null);
 
-        return [
-            'type' => 'package',
-            'package' => (array)$this->package
-        ];
+        $this->setGit(new Git($config['git'] ?? []));
+
+        $this->setScripts(New Scripts($config['scripts'] ?? []));
+
     }
 
     public function getTarget()
@@ -30,25 +31,58 @@ class Environment
         return $this->target;
     }
 
-    public function setTarget($target)
+    private function setTarget($target)
     {
         $this->target = $target;
     }
 
     /**
-     * @return Package
+     * @return mixed
      */
-    public function getPackage()
+    public function getName()
     {
-        return $this->package;
+        return $this->name;
     }
 
     /**
-     * @param array $package
+     * @param mixed $name
      */
-    public function setPackage(array $package)
+    private function setName($name)
     {
-        $this->package = new Package($package);
+        $this->name = $name;
     }
+
+    /**
+     * @return Git|null
+     */
+    public function getGit()
+    {
+        return $this->git;
+    }
+
+    /**
+     * @param mixed $git
+     */
+    private function setGit(Git $git)
+    {
+        $this->git = $git;
+    }
+
+    /**
+     * @return Scripts
+     */
+    public function getScripts() : Scripts
+    {
+        return $this->scripts;
+    }
+
+    /**
+     * @param Scripts $scripts
+     */
+    public function setScripts(Scripts $scripts)
+    {
+        $this->scripts = $scripts;
+    }
+
 
 }
