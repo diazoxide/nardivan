@@ -18,7 +18,7 @@ class Nardivan
 html;
     public $pwd;
 
-    public $repos;
+    public $environments;
 
     public $directory;
 
@@ -93,16 +93,22 @@ html;
     private function init()
     {
 
-        self::print($this->logo, 3, 'yellow');
 
-        $this->fetchRepos();
+        $this->fetchEnvironments();
 
         $this->composer_dir = $this->instance_directory . '/composer';
 
         if (isset($_SERVER['argv'][1]) && $_SERVER['argv'][1] == 'update') {
+            self::print($this->logo, 3, 'yellow');
             $this->update();
         } elseif (isset($_SERVER['argv'][1]) && $_SERVER['argv'][1] == 'install') {
             $this->install();
+        } elseif (isset($_SERVER['argv'][1]) && $_SERVER['argv'][1] == 'composer') {
+            self::print("Local Composer");
+            unset($_SERVER['argv'][0]);
+            unset($_SERVER['argv'][1]);
+            $this->runComposerCommand(array_values($_SERVER['argv']));
+            return false;
         } else {
             $this->help();
         }
@@ -153,9 +159,9 @@ html;
         $composer_config = [
             'name' => 'nardivan/' . md5(time()),
             'description' => md5(time()),
-            'scripts'=>[
-                'post-package-update'=>PackageInstaller::class."::postPackageUpdate",
-                'post-package-install'=>PackageInstaller::class."::postPackageUpdate"
+            'scripts' => [
+                'post-package-update' => PackageInstaller::class . "::postPackageUpdate",
+                'post-package-install' => PackageInstaller::class . "::postPackageUpdate"
             ]
         ];
 
@@ -163,21 +169,21 @@ html;
             $composer_config['scripts'] = $this->scripts;
         }
 
-        /** @var Repo $repo */
-        foreach ($this->repos as $key => $repo) {
+        /** @var Environment $environment */
+        foreach ($this->environments as $key => $environment) {
 
-            self::print('===> ' . ($key + 1) . '. ' . $repo->name . " -> " . $repo->target, true, 'light_blue');
+            self::print('===> ' . ($key + 1) . '. ' . $environment->getPackage()->name . " -> " . $environment->target,
+                true, 'light_blue');
 
-            $composer_repo_config = $repo->getComposerConfig();
-            $composer_config['repositories'][] = $composer_repo_config;
-            $composer_config['require'][$composer_repo_config['package']['name']] = $composer_repo_config['package']['version'];
+            $composer_config['repositories'][] = $environment->getComposerRepository();
+            $composer_config['require'][$environment->getPackage()->name] = "*";
 
         }
 
         /*
          * Generate json config file
          * */
-        $json = json_encode($composer_config, JSON_PRETTY_PRINT);
+        $json = json_encode($composer_config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
         $composer_json_path = $this->composer_dir . '/composer.json';
 
@@ -193,9 +199,7 @@ html;
     public function runComposerCommand($command)
     {
         self::print("==> Update composer : ", false, 'yellow');
-        putenv('COMPOSER_HOME=' . 'cache');
-        // call `composer install` command programmatically
-        $input = new ArrayInput(array('command' => $command/*, '--quiet'*/));
+        $input = new ArrayInput($command);
         $application = new Application();
         $application->setAutoExit(false);
         $application->run($input);
@@ -221,38 +225,47 @@ html;
         /*
          * Changing current directory to composer directory
          * */
-        chdir($this->composer_dir);
+//        chdir($this->composer_dir);
 
         /*
          * Run programmatically composer update command
          * */
-        $this->runComposerCommand('update');
+        self::print($this->pwd.'/'.$this->composer_dir);
+
+        system( 'composer update --working-dir ./"'.$this->composer_dir.'"');
 
         self::print("==> Linking repos:", true, 'yellow');
 
         /**
          * Creating symlinks for repos on target folder
          *
-         * @var Repo $repo
+         * @var Environment $environment
          */
-        foreach ($this->repos as $key => $repo) {
+        foreach ($this->environments as $key => $environment) {
 
             /*
              * Changing current directory to root of project
              * */
             chdir($this->pwd);
 
-            self::print("===> " . ($key + 1) . ' ' . $repo->name, true, 'light_blue');
+            self::print("===> " . ($key + 1) . ' ' . $environment->getPackage()->name, true, 'light_blue');
 
             /*
              * Building repo relative directory path
              * */
-            $repo_dir = $this->composer_dir . "/vendor/nardivan/" . $repo->name;
+            $package_dir = $this->composer_dir . "/vendor/" . $environment->getPackage()->name;
 
             /*
              * Building target relative path
              * */
-            $target = $this->directory . $repo->target;
+            $target = $this->directory . $environment->target;
+            if (file_exists($target)) {
+                if (is_dir($target)) {
+                    self::deleteDir($target);
+                } else {
+                    unlink($target);
+                }
+            }
 
             /*
              * Split path, to get count of path parts
@@ -263,33 +276,24 @@ html;
             /*
              * Building backtrace relative path prefix
              * */
-            $repo_dir_prefix = str_repeat("../", count($target_parts) - 1);
-            $repo_dir = './' . $repo_dir_prefix . $repo_dir . '/';
+            $package_dir_prefix = str_repeat("../", count($target_parts) - 1);
+            $package_dir = './' . $package_dir_prefix . $package_dir . '/';
 
             /*
              * Unset target name from target path to get target directory
              * */
             unset($target_parts[count($target_parts) - 1]);
             $target_dir = implode('/', $target_parts);
+
             /*
              * Changing current directory to target directory
              * */
             chdir($target_dir);
 
             /*
-             * Remove old symlink or directory
-             * */
-            if (file_exists($repo->name)) {
-                if (is_dir($repo->name)) {
-                    self::deleteDir($repo->name);
-                } else {
-                    unlink($repo->name);
-                }
-            }
-            /*
              * Creating symlink
              * */
-            exec('ln -s ' . $repo_dir);
+            exec('ln -s ' . $package_dir);
         }
         self::print("==> Linking repos: success", true, 'green');
 
@@ -310,10 +314,10 @@ html;
     /**
      * Creating repos objects
      */
-    private function fetchRepos()
+    private function fetchEnvironments()
     {
-        foreach ($this->repos as &$repo) {
-            $repo = new Repo($repo);
+        foreach ($this->environments as &$environment) {
+            $environment = new Environment($environment);
         }
     }
 

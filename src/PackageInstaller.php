@@ -24,21 +24,6 @@ class PackageInstaller
 
     }
 
-    public static function runComposerCommand($path, $command)
-    {
-        $pwd = getcwd();
-        chdir($path);
-        Nardivan::print("==> Update composer : ", false, 'yellow');
-        putenv('COMPOSER=' . $path . '/composer.json');
-        // call `composer install` command programmatically
-        $input = new ArrayInput(array('command' => $command/*, '--quiet'*/));
-        $application = new Application();
-        $application->setAutoExit(false);
-        $application->run($input);
-        Nardivan::print("success", true, 'light_green');
-        chdir($pwd);
-    }
-
     /**
      * @param PackageEvent $event
      */
@@ -67,11 +52,11 @@ class PackageInstaller
     {
 
         if (file_exists($directory . '/composer.json')) {
-            self::runComposerCommand($directory, 'update');
+            system( 'composer update --working-dir '.$directory);
         }
-        if (file_exists($directory . '/package.json')) {
+        /*if (file_exists($directory . '/package.json')) {
             self::runNpmCommand($directory, 'install');
-        }
+        }*/
     }
 
 }
