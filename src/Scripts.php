@@ -7,6 +7,8 @@ namespace NovemBit\nardivan;
 class Scripts
 {
 
+    private $active;
+
     private $pre_install = [];
     private $post_install = [];
     private $pre_update = [];
@@ -14,6 +16,10 @@ class Scripts
 
     public function __construct($config)
     {
+        if ($config === null) {
+            $this->setActive(false);
+            return;
+        }
         $this->setPreInstall($config['pre-install'] ?? []);
 
         $this->setPostInstall($config['post-install'] ?? []);
@@ -21,6 +27,8 @@ class Scripts
         $this->setPreUpdate($config['pre-update'] ?? []);
 
         $this->setPostUpdate($config['post-update'] ?? []);
+
+        $this->setActive(true);
 
     }
 
@@ -86,5 +94,21 @@ class Scripts
     public function setPreInstall(array $pre_install)
     {
         $this->pre_install = $pre_install;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isActive(): bool
+    {
+        return $this->active;
+    }
+
+    /**
+     * @param bool $active
+     */
+    public function setActive(bool $active)
+    {
+        $this->active = $active;
     }
 }

@@ -37,14 +37,14 @@ html;
     public function __construct()
     {
         if (!isset($_SERVER['PWD'])) {
-            echo "Please run this file only with CLI";
+            Output::error("Please run this file only with CLI");
             die;
         }
 
         $this->pwd = $_SERVER['PWD'];
 
         if (!file_exists($this->pwd . '/nardivan.json')) {
-            self::print('nardivan.json not detected');
+            Output::error('nardivan.json not detected');
             return false;
         }
 
@@ -52,7 +52,7 @@ html;
         $config = json_decode($json, true);
 
         if (json_last_error() != JSON_ERROR_NONE) {
-            self::print("Bad nardivan.json file");
+            Output::error("Bad nardivan.json file");
             return false;
         }
 
@@ -61,26 +61,6 @@ html;
         return $this->init();
     }
 
-    /**
-     * @param $text
-     * @param bool $newline
-     * @param null $color
-     * @param null $background
-     * @param bool $return
-     * @return string
-     */
-    public static function print($text, $newline = true, $color = null, $background = null, $return = false)
-    {
-        $suffix = str_repeat(PHP_EOL, (int)$newline);
-        $text = $text . $suffix;
-
-        $text = Output::getColoredString($text, $color, $background);
-
-        if (!$return) {
-            echo $text;
-        }
-        return $text;
-    }
 
     /**
      * @return bool
@@ -93,11 +73,9 @@ html;
          * If update command exists
          * */
         if (isset($_SERVER['argv'][1]) && $_SERVER['argv'][1] == 'update') {
-            self::print($this->logo, 3, 'yellow');
-            $this->update(
-                in_array('--ignore-changes', $_SERVER['argv'])
-                || in_array('-ic', $_SERVER['argv'])
-            );
+            Output::print($this->logo, 3, 'yellow');
+
+            $this->update();
         } elseif (isset($_SERVER['argv'][1]) && $_SERVER['argv'][1] == 'install') {
             $this->install();
         } else {
@@ -115,7 +93,7 @@ html;
      */
     private function install()
     {
-        self::print("=> Installing nardivan: ", false, 'yellow');
+        Output::print("=> Installing nardivan: ", false, 'yellow');
 
         if (!file_exists($this->instance_directory) && !is_dir($this->instance_directory)) {
             mkdir($this->instance_directory);
@@ -125,17 +103,17 @@ html;
             mkdir($this->environment_dir);
         }
 
-        self::print("success", true, 'light_green');
+        Output::print("success", true, 'light_green');
     }
 
-    private static function rrmdir($dir)
+    private static function removeDirectory($dir)
     {
         if (is_dir($dir)) {
             $objects = scandir($dir);
             foreach ($objects as $object) {
                 if ($object != "." && $object != "..") {
                     if (is_dir($dir . "/" . $object)) {
-                        self::rrmdir($dir . "/" . $object);
+                        self::removeDirectory($dir . "/" . $object);
                     } else {
                         unlink($dir . "/" . $object);
                     }
@@ -148,20 +126,26 @@ html;
     /**
      * Delete directory with contain files
      *
-     * @param $dirname
+     * @param $file
      * @return bool
      */
     private static function deleteFile($file)
     {
-        if(is_link($file)){
+        if (!file_exists($file)) {
+            return true;
+        }
+        if (!is_writable($file)) {
+            return false;
+        }
+
+        if (is_link($file)) {
             unlink($file);
-        }elseif (is_dir($file)) {
-            self::rrmdir($file);
-        } else {
+        } elseif (is_dir($file)) {
+            self::removeDirectory($file);
+        } elseif (is_file($file)) {
             unlink($file);
         }
         return true;
-
     }
 
 
@@ -181,38 +165,104 @@ html;
         }
     }
 
+    private static function dirIsEmpty($dir)
+    {
+        $handle = opendir($dir);
+        while (false !== ($entry = readdir($handle))) {
+            if ($entry != "." && $entry != "..") {
+                closedir($handle);
+                return false;
+            }
+        }
+        closedir($handle);
+        return true;
+    }
+
     /**
      * Update command
      *
      * To update all repos and create symlinks
      * @param bool $ignore_changes
      */
-    private function update($ignore_changes = false)
+    private function update()
     {
-        self::print("=> Update repos:", false, 'light_green');
+        Output::tree("Update", 1, 'green');
+
+        $scripts = $this->getConfig()->getScripts();
+
+        if ($scripts->isActive()) {
+
+            self::execCommands($this->getConfig()->getDirectory(), $scripts->getPreUpdate());
+        }
+        $this->updateEnvironments();
+
+        self::execCommands($this->getConfig()->getDirectory(), $scripts->getPostUpdate());
+    }
+
+
+    /**
+     * Update Environments
+     *
+     */
+    private function updateEnvironments()
+    {
+
+        Output::tree("Update environments", 2, 'green');
+
+        $ignore_changes = in_array('--ignore-changes', $_SERVER['argv'])
+            || in_array('-ic', $_SERVER['argv']);
 
         if ($ignore_changes) {
-            self::print(" => Warning: Ignoring all changes.", true, 'yellow');
+            Output::warning("Ignoring all changes.");
         }
 
         $environments_scripts = $this->getConfig()->getEnvironmentsScripts();
 
-        foreach ($this->getConfig()->getEnvironments() as $environment) {
+        foreach ($this->getConfig()->getEnvironments() as $index => $environment) {
 
-            self::print('==> ' . $environment->getName(), true, 'light_red');
+            Output::tree(($index + 1) . '. ' . $environment->getName(), 3, 'yellow');
+
+            if (!$environment->isActive() ||(
+                    !empty($environment->getSpecialCommandArguments())
+                    && count(array_intersect($environment->getSpecialCommandArguments(), $_SERVER['argv']))==0
+                )) {
+                Output::tree("Skipped.",4,'warning');
+                continue;
+            }
+
 
             $scripts = $environment->getScripts();
 
-            if ($this->getConfig()->isUseSymlinkMethod()) {
+            $is_use_symlink_method = $environment->isUseSymlinkMethod() === null ?
+                $this->getConfig()->isUseSymlinkMethod() : $environment->isUseSymlinkMethod();
+
+            /*
+             * Doing filesystem actions before
+             * Updating environment
+             * */
+            if ($is_use_symlink_method) {
+
                 $dir = sprintf('%s/%s/%s',
-                    $this->instance_directory, $this->environment_dir, $environment->getName());
+                    $this->instance_directory,
+                    $this->environment_dir,
+                    $environment->getName()
+                );
+
+                if (!file_exists($dir)) {
+                    mkdir($dir);
+                }
 
                 $target_dir = sprintf('%s/%s',
                     $this->getConfig()->getDirectory(), $environment->getTarget());
 
-                self::deleteFile($target_dir);
+                if (!self::deleteFile($target_dir)) {
+                    Output::tree("You dont have write access to ($target_dir) directory.", 4, 'error');
+                    continue;
+                }
 
                 $target_parts = explode('/', $target_dir);
+
+                $target_dir_name = $target_parts[count($target_parts) - 1];
 
                 /*
                  * Building backtrace relative path prefix
@@ -228,114 +278,69 @@ html;
                 $pwd = getcwd();
 
                 chdir($target_relative_dir);
-                exec('ln -s ' . $dir_relative);
+                exec('ln -s ' . $dir_relative . ' ' . $target_dir_name);
                 chdir($pwd);
+
 
             } else {
                 $dir = sprintf('%s/%s/%s',
                     $this->pwd, $this->getConfig()->getDirectory(), $environment->getTarget());
-                self::print($dir);
                 if (is_link($dir)) {
-                    unlink($dir);
-                } elseif (file_exists($dir)) {
-                    if (!file_exists($dir . '/.git') || !is_dir($dir . '/.git')) {
-                        self::deleteFile($dir);
+                    if (!self::deleteFile($dir)) {
+                        Output::tree("You dont have write access to ($dir) directory.", 4, 'error');
+                        continue;
                     }
-                } else {
+                } elseif (!file_exists($dir)) {
                     mkdir($dir);
                 }
             }
 
+            /*
+            * Execute pre update scripts
+            * */
+            Output::tree("Running pre-update actions", 4, 'blue');
+            self::execCommands($dir, array_merge($scripts->getPreUpdate(), $environments_scripts->getPreUpdate()));
 
-            self::execCommands($dir, $scripts->getPreUpdate());
-            self::execCommands($dir, $environments_scripts->getPreUpdate());
+            /*
+             * Running git actions
+             * */
+            if ($environment->getSource()->isActive() && $environment->getSource()->getGit()->isActive()) {
 
-            if (file_exists($dir . '/.git') && is_dir($dir . '/.git')) {
+                $git = $environment->getSource()->getGit();
+                Output::tree("Running git actions", 4, 'blue');
 
-                if ($ignore_changes) {
-                    system(sprintf('git -C %s fetch --all', $dir));
-                    system(sprintf("git -C %s reset --hard origin/%s", $dir, $environment->getGit()->getBranch()));
+                if (file_exists($dir . '/.git') && is_dir($dir . '/.git')) {
+
+                    if ($ignore_changes) {
+                        system(sprintf('git -C %s fetch --all', $dir));
+                        system(sprintf("git -C %s reset --hard origin/%s", $dir, $git->getBranch()));
+                    } else {
+                        system(sprintf("git -C %s pull", $dir));
+                    }
+
                 } else {
-                    system(sprintf("git -C %s pull", $dir));
-                }
+                    if (!$ignore_changes && !self::dirIsEmpty($dir)) {
 
-            } else {
-                system(sprintf("git clone -b %s %s %s",
-                        $environment->getGit()->getBranch(),
-                        $environment->getGit()->getUrl(),
-                        $dir
-                    )
-                );
-            }
-            self::execCommands($dir, $scripts->getPostUpdate());
-            self::execCommands($dir, $environments_scripts->getPostUpdate());
-        }
+                        Output::tree("The directory (" . $dir . ") is not empty.", 4, 'error');
+                        continue;
+                    }
 
-        die;
-        self::print("==> Linking repos:", true, 'yellow');
-
-        /**
-         * Creating symlinks for repos on target folder
-         *
-         * @var Environment $environment
-         */
-        foreach ($this->environments as $key => $environment) {
-
-            /*
-             * Changing current directory to root of project
-             * */
-            chdir($this->pwd);
-
-            self::print("===> " . ($key + 1) . ' ' . $environment->getName(), true, 'light_blue');
-
-            /*
-             * Building repo relative directory path
-             * */
-            $dir_relative = $this->environment_dir . "/" . $environment->getName();
-
-            /*
-             * Building target relative path
-             * */
-            $target = $this->directory . $environment->getTarget();
-            if (file_exists($target)) {
-                if (is_dir($target)) {
-                    self::deleteDir($target);
-                } else {
-                    unlink($target);
+                    system(sprintf("git clone -b %s %s %s",
+                            $git->getBranch(),
+                            $git->getUrl(),
+                            $dir
+                        )
+                    );
                 }
             }
 
             /*
-             * Split path, to get count of path parts
-             * And then unset target name from path
+             * Execute post update scripts
              * */
-            $target_parts = explode('/', $target);
+            Output::tree("Running post-update actions", 4, 'blue');
+            self::execCommands($dir, array_merge($scripts->getPostUpdate(), $environments_scripts->getPostUpdate()));
 
-            /*
-             * Building backtrace relative path prefix
-             * */
-            $dir_relative_prefix = str_repeat("../", count($target_parts) - 1);
-            $dir_relative = './' . $dir_relative_prefix . $dir_relative . '/';
-
-            /*
-             * Unset target name from target path to get target directory
-             * */
-            unset($target_parts[count($target_parts) - 1]);
-            $target_dir = implode('/', $target_parts);
-
-            /*
-             * Changing current directory to target directory
-             * */
-            chdir($target_dir);
-
-            /*
-             * Creating symlink
-             * */
-            exec('ln -s ' . $dir_relative);
         }
-        self::print("==> Linking repos: success", true, 'green');
-
-        self::print("<= Update repos: success", true, 'green');
     }
 
     /**
@@ -343,9 +348,9 @@ html;
      */
     private function help()
     {
-        self::print("Please choose command.");
-        self::print("install: First time run, to create instances directories.");
-        self::print("update: Updates repos and create symlinks");
+        Output::print("Please choose command.");
+        Output::print("install: First time run, to create instances directories.");
+        Output::print("update: Updates repos and create symlinks");
         /*Todo: create commands list*/
     }
 

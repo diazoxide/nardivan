@@ -53,6 +53,101 @@ class Output
         return $colored_string;
     }
 
+    /**
+     * @param $text
+     * @param bool $newline
+     * @param null $color
+     * @param null $background
+     * @param bool $return
+     * @return string
+     */
+    public static function print($text, $newline = true, $color = null, $background = null, $return = false)
+    {
+        $suffix = str_repeat(PHP_EOL, (int)$newline);
+        $text = $text . $suffix;
+
+        $text = self::getColoredString($text, $color, $background);
+
+        if (!$return) {
+            echo $text;
+        }
+        return $text;
+    }
+
+
+    public static function tree(
+        $message,
+        $step = 1,
+        $type = "note",
+        $arrow_left = "",
+        $symbol = '==',
+        $arrow_right = '>'
+    ) {
+        self::print($arrow_left . str_repeat($symbol, $step) . $arrow_right . " ", false, 'light_purple');
+        call_user_func_array([self::class, $type], [$message, 0, 1]);
+    }
+
+    public static function modal(
+        $message,
+        $message_color = "green",
+        $prefix = '',
+        $prefix_color = 'red',
+        $suffix = '',
+        $suffix_color = 'red',
+        $before_line = 1,
+        $after_line = 1
+    ) {
+        self::print('', $before_line);
+        if ($prefix) {
+            self::print($prefix, false, $prefix_color);
+        }
+        self::print($message, 1, $message_color);
+        if ($suffix) {
+            self::print($suffix, false, $suffix_color);
+        }
+        self::print('', $after_line);
+
+    }
+
+    public static function green($message, $before_line = 1, $after_line = 0)
+    {
+        self::modal($message, 'green', '', '', '', '', $before_line, $after_line);
+    }
+
+    public static function blue($message, $before_line = 1, $after_line = 0)
+    {
+        self::modal($message, 'blue', '', '', '', '', $before_line, $after_line);
+    }
+
+    public static function red($message, $before_line = 1, $after_line = 0)
+    {
+        self::modal($message, 'red', '', '', '', '', $before_line, $after_line);
+    }
+
+    public static function yellow($message, $before_line = 1, $after_line = 0)
+    {
+        self::modal($message, 'yellow', '', '', '', '', $before_line, $after_line);
+    }
+
+    public static function note($message, $before_line = 1, $after_line = 1)
+    {
+        self::modal($message, 'light_gray', 'Note: ', 'light_purple', '', '', $before_line, $after_line);
+    }
+
+    public static function success($message, $before_line = 1, $after_line = 1)
+    {
+        self::modal($message, 'yellow', 'Success: ', 'light_green', '', '', $before_line, $after_line);
+    }
+
+    public static function warning($message, $before_line = 1, $after_line = 1)
+    {
+        self::modal($message, 'light_red', 'Warning: ', 'yellow', '', '', $before_line, $after_line);
+    }
+
+    public static function error($message, $before_line = 1, $after_line = 1)
+    {
+        self::modal($message, 'yellow', 'Error: ', 'light_red', '', '', $before_line, $after_line);
+    }
 }
 
 

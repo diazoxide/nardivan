@@ -26,9 +26,9 @@ class Config
 
         $this->setDirectory($config['directory'] ?? null);
 
-        $this->setScripts(New Scripts($config['scripts']) ?? []);
+        $this->setScripts(New Scripts($config['scripts']) ?? null);
 
-        $this->setEnvironmentsScripts(New Scripts($config['environments-scripts']) ?? []);
+        $this->setEnvironmentsScripts(New Scripts($config['environments-scripts']) ?? null);
     }
 
     /**

@@ -7,16 +7,25 @@ namespace NovemBit\nardivan;
 class Git
 {
 
+    private $active;
+
     private $url;
 
     private $branch;
 
-    public function __construct(array $config)
+    public function __construct($config)
     {
+
+        if ($config === null) {
+            $this->setActive(false);
+            return;
+        }
 
         $this->setBranch($config['branch'] ?? null);
 
         $this->setUrl($config['url'] ?? null);
+
+        $this->setActive(true);
 
     }
 
@@ -50,6 +59,22 @@ class Git
     private function setBranch($branch)
     {
         $this->branch = $branch;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isActive(): bool
+    {
+        return $this->active;
+    }
+
+    /**
+     * @param bool $active
+     */
+    private function setActive(bool $active)
+    {
+        $this->active = $active;
     }
 
 }
