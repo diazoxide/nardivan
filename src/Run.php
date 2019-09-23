@@ -6,6 +6,7 @@ namespace NovemBit\nardivan;
 use Composer\Console\Application;
 use Composer\Package\Package;
 use Exception;
+use PharData;
 use Symfony\Component\Console\Input\ArrayInput;
 
 class Run
@@ -27,7 +28,8 @@ html;
     /**
      * @var string
      */
-    private $environment_dir = 'environments';
+    private $environments_dir = 'environments';
+    private $downloads_dir = 'downloads';
     private $config;
 
     /**
@@ -42,6 +44,8 @@ html;
         }
 
         $this->pwd = $_SERVER['PWD'];
+        $this->environments_dir = $this->instance_directory . '/environments';
+        $this->downloads_dir = $this->instance_directory . '/downloads';
 
         if (!file_exists($this->pwd . '/nardivan.json')) {
             Output::error('nardivan.json not detected');
@@ -99,8 +103,13 @@ html;
             mkdir($this->instance_directory);
         }
 
-        if (!file_exists($this->environment_dir) && !is_dir($this->environment_dir)) {
-            mkdir($this->environment_dir);
+
+        if (!file_exists($this->environments_dir) && !is_dir($this->environments_dir)) {
+            mkdir($this->environments_dir);
+        }
+
+        if (!file_exists($this->downloads_dir) && !is_dir($this->downloads_dir)) {
+            mkdir($this->downloads_dir);
         }
 
         Output::print("success", true, 'light_green');
@@ -161,6 +170,7 @@ html;
     private static function execCommands($directory, $commands)
     {
         foreach ($commands as $command) {
+            Output::note( $command);
             self::execCommand($directory, $command);
         }
     }
@@ -199,7 +209,6 @@ html;
         self::execCommands($this->getConfig()->getDirectory(), $scripts->getPostUpdate());
     }
 
-
     /**
      * Update Environments
      *
@@ -222,35 +231,33 @@ html;
 
             Output::tree(($index + 1) . '. ' . $environment->getName(), 3, 'yellow');
 
-            if (!$environment->isActive() ||(
+            if (!$environment->isActive() || (
                     !empty($environment->getSpecialCommandArguments())
-                    && count(array_intersect($environment->getSpecialCommandArguments(), $_SERVER['argv']))==0
+                    && count(array_intersect($environment->getSpecialCommandArguments(), $_SERVER['argv'])) == 0
                 )) {
-                Output::tree("Skipped.",4,'warning');
+                Output::tree("Skipped.", 4, 'warning');
                 continue;
             }
 
 
             $scripts = $environment->getScripts();
 
-            $is_use_symlink_method = $environment->isUseSymlinkMethod() === null ?
-                $this->getConfig()->isUseSymlinkMethod() : $environment->isUseSymlinkMethod();
+            $linking = $environment->isLinking() === null ? $this->getConfig()->isLinking() : $environment->isLinking();
+
+            $dir = sprintf('%s/%s',
+                $this->environments_dir,
+                $environment->getName()
+            );
+
+            if (!file_exists($dir)) {
+                mkdir($dir);
+            }
 
             /*
              * Doing filesystem actions before
              * Updating environment
              * */
-            if ($is_use_symlink_method) {
-
-                $dir = sprintf('%s/%s/%s',
-                    $this->instance_directory,
-                    $this->environment_dir,
-                    $environment->getName()
-                );
-
-                if (!file_exists($dir)) {
-                    mkdir($dir);
-                }
+            if ($linking) {
 
                 $target_dir = sprintf('%s/%s',
                     $this->getConfig()->getDirectory(), $environment->getTarget());
@@ -280,19 +287,6 @@ html;
                 chdir($target_relative_dir);
                 exec('ln -s ' . $dir_relative . ' ' . $target_dir_name);
                 chdir($pwd);
-
-
-            } else {
-                $dir = sprintf('%s/%s/%s',
-                    $this->pwd, $this->getConfig()->getDirectory(), $environment->getTarget());
-                if (is_link($dir)) {
-                    if (!self::deleteFile($dir)) {
-                        Output::tree("You dont have write access to ($dir) directory.", 4, 'error');
-                        continue;
-                    }
-                } elseif (!file_exists($dir)) {
-                    mkdir($dir);
-                }
             }
 
             /*
@@ -304,33 +298,59 @@ html;
             /*
              * Running git actions
              * */
-            if ($environment->getSource()->isActive() && $environment->getSource()->getGit()->isActive()) {
-
+            if ($environment->getSource()->isActive()) {
                 $git = $environment->getSource()->getGit();
-                Output::tree("Running git actions", 4, 'blue');
+                $archive = $environment->getSource()->getArchive();
+                if ($git->isActive()) {
 
-                if (file_exists($dir . '/.git') && is_dir($dir . '/.git')) {
+                    Output::tree("Running git actions", 4, 'blue');
 
-                    if ($ignore_changes) {
-                        system(sprintf('git -C %s fetch --all', $dir));
-                        system(sprintf("git -C %s reset --hard origin/%s", $dir, $git->getBranch()));
+                    if (file_exists($dir . '/.git') && is_dir($dir . '/.git')) {
+
+                        if ($ignore_changes) {
+                            system(sprintf('git -C %s fetch --all', $dir));
+                            system(sprintf("git -C %s reset --hard origin/%s", $dir, $git->getBranch()));
+                        } else {
+                            system(sprintf("git -C %s pull", $dir));
+                        }
+
                     } else {
-                        system(sprintf("git -C %s pull", $dir));
+                        if (!$ignore_changes && !self::dirIsEmpty($dir)) {
+
+                            Output::tree("The directory (" . $dir . ") is not empty.", 4, 'error');
+                            continue;
+                        }
+
+                        system(sprintf("git clone -b %s %s %s",
+                                $git->getBranch(),
+                                $git->getUrl(),
+                                $dir
+                            )
+                        );
+                    }
+                } elseif ($archive->isActive()) {
+
+                    Output::tree("Running Archive actions", 4, 'blue');
+
+                    $file_path = $dir . '/' . basename($archive->getPath());
+
+                    if ($fh = fopen($file_path, 'w')) {
+                        $ch = curl_init();
+                        curl_setopt($ch, CURLOPT_URL, $archive->getUrl());
+                        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+                        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+                        curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_ALL);
+                        curl_setopt($ch, CURLOPT_VERBOSE, 1);
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                        curl_setopt($ch, CURLOPT_AUTOREFERER, false);
+                        curl_setopt($ch, CURLOPT_HEADER, 0);
+                        curl_setopt($ch, CURLOPT_NOPROGRESS, false);
+                        curl_setopt($ch, CURLOPT_FILE, $fh);
+                        curl_exec($ch);
+                        curl_close($ch);
+                        fclose($fh);
                     }
 
-                } else {
-                    if (!$ignore_changes && !self::dirIsEmpty($dir)) {
-
-                        Output::tree("The directory (" . $dir . ") is not empty.", 4, 'error');
-                        continue;
-                    }
-
-                    system(sprintf("git clone -b %s %s %s",
-                            $git->getBranch(),
-                            $git->getUrl(),
-                            $dir
-                        )
-                    );
                 }
             }
 
@@ -341,6 +361,19 @@ html;
             self::execCommands($dir, array_merge($scripts->getPostUpdate(), $environments_scripts->getPostUpdate()));
 
         }
+    }
+
+    private static function extractArchive($source, $target)
+    {
+
+        if (mime_content_type($source) == "application/x-gzip") {
+
+            $exclude_str = "";
+            $command = "tar zxf \"$source\" -C \"$target\" --checkpoint=1 --checkpoint-action='ttyout=Progress: %s %u files\r' $exclude_str";
+            system($command);
+        }
+
+
     }
 
     /**

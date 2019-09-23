@@ -14,7 +14,9 @@
     "ext-pdo": "*",
     "ext-json": "*",
     "ext-curl": "*",
-    "ext-readline": "*"
+    "ext-readline": "*",
+    "ext-ssh2": "*",
+    "ext-fileinfo": "*"
   },
   "require-dev": {
   },

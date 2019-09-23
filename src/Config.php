@@ -16,11 +16,11 @@ class Config
 
     private $environments_scripts;
 
-    private $use_symlink_method = true;
+    private $linking = true;
 
     public function __construct($config)
     {
-        $this->setUseSymlinkMethod($config['use-symlink-method'] ?? true);
+        $this->setLinking($config['linking'] ?? true);
 
         $this->setEnvironments($config['environments'] ?? []);
 
@@ -52,17 +52,17 @@ class Config
     /**
      * @return bool
      */
-    public function isUseSymlinkMethod(): bool
+    public function isLinking(): bool
     {
-        return $this->use_symlink_method;
+        return $this->linking;
     }
 
     /**
-     * @param bool $use_symlink_method
+     * @param bool $linking
      */
-    public function setUseSymlinkMethod(bool $use_symlink_method)
+    public function setLinking(bool $linking)
     {
-        $this->use_symlink_method = $use_symlink_method;
+        $this->linking = $linking;
     }
 
     /**

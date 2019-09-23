@@ -20,6 +20,7 @@ class Source
         }
 
         $this->setGit(new Git($config['git'] ?? null));
+        $this->setArchive(new Archive($config['archive'] ?? null));
 
         $this->setActive(true);
     }
@@ -38,6 +39,22 @@ class Source
     private function setGit(Git $git)
     {
         $this->git = $git;
+    }
+
+    /**
+     * @return Archive|null
+     */
+    public function getArchive()
+    {
+        return $this->archive;
+    }
+
+    /**
+     * @param Archive $archive
+     */
+    private function setArchive(Archive $archive)
+    {
+        $this->archive = $archive;
     }
 
     /**

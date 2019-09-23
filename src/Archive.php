@@ -11,6 +11,7 @@ class Archive
 
     private $url;
 
+    private $scheme;
     private $host;
     private $port;
     private $username;
@@ -29,17 +30,19 @@ class Archive
 
         if ($this->getUrl() != null) {
             $parsed = parse_url($this->getUrl());
+            $this->setScheme($parsed['scheme'] ?? null);
             $this->setHost($parsed['host'] ?? null);
             $this->setPort($parsed['port'] ?? null);
             $this->setUsername($parsed['user'] ?? null);
             $this->setPassword($parsed['pass'] ?? null);
             $this->setPath($parsed['path'] ?? null);
         } else {
+            $this->setScheme($config['scheme'] ?? null);
             $this->setHost($config['host'] ?? null);
+            $this->setPort($config['port'] ?? 22);
             $this->setUsername($config['username'] ?? null);
             $this->setPassword($config['password'] ?? null);
             $this->setPath($config['path'] ?? null);
-            $this->setPort($config['port'] ?? 22);
         }
 
         $this->setActive(true);
@@ -155,6 +158,22 @@ class Archive
     public function setPort($port)
     {
         $this->port = $port;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getScheme()
+    {
+        return $this->scheme;
+    }
+
+    /**
+     * @param mixed $scheme
+     */
+    public function setScheme($scheme)
+    {
+        $this->scheme = $scheme;
     }
 
 }

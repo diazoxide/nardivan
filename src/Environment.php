@@ -16,7 +16,7 @@ class Environment
 
     private $scripts;
 
-    private $use_symlink_method;
+    private $linking;
 
     private $special_command_arguments = [];
 
@@ -35,7 +35,7 @@ class Environment
 
         $this->setScripts(New Scripts($config['scripts'] ?? []));
 
-        $this->setUseSymlinkMethod($config['use-symlink-method'] ?? null);
+        $this->setLinking($config['linking'] ?? null);
 
         $this->setSpecialCommandArguments($config['special-command-arguments'] ?? []);
 
@@ -104,17 +104,17 @@ class Environment
     /**
      * @return bool|null
      */
-    public function isUseSymlinkMethod()
+    public function isLinking()
     {
-        return $this->use_symlink_method;
+        return $this->linking;
     }
 
     /**
-     * @param bool|null $use_symlink_method
+     * @param bool|null $linking
      */
-    public function setUseSymlinkMethod($use_symlink_method)
+    public function setLinking($linking)
     {
-        $this->use_symlink_method = $use_symlink_method;
+        $this->linking = $linking;
     }
 
     /**
