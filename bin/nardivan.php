@@ -2,7 +2,7 @@
 
 use NovemBit\nardivan\Run;
 
-include "vendor/autoload.php";
+include __DIR__."/../../../vendor/autoload.php";
 
 $config = [];
 
