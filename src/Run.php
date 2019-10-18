@@ -160,7 +160,7 @@ html;
 
     private static function execCommand($directory, $command)
     {
-        system(sprintf('cd %s && %s', $directory, $command));
+        print shell_exec(sprintf('cd %s && %s', $directory, $command));
     }
 
     /**
@@ -170,7 +170,7 @@ html;
     private static function execCommands($directory, $commands)
     {
         foreach ($commands as $command) {
-            Output::note( $command);
+            Output::note($command);
             self::execCommand($directory, $command);
         }
     }
