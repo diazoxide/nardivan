@@ -17,7 +17,7 @@
   },
   "require-dev": {
   },
-  "bin": ["bin/nardivan.php"],
+  "bin": ["bin/nardivan"],
   "config": {
     "bin-dir":"bin/"
   },
