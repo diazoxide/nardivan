@@ -9,14 +9,10 @@
   "type": "library",
   "require": {
     "php": ">=7.0",
-    "composer/composer": "dev-master",
-    "ext-dom": "*",
-    "ext-libxml": "*",
     "ext-pdo": "*",
     "ext-json": "*",
     "ext-curl": "*",
     "ext-readline": "*",
-
     "ext-fileinfo": "*"
   },
   "require-dev": {
