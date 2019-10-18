@@ -5,7 +5,7 @@
 
   ],
   "license": "GPL-3.0-or-later",
-  "minimum-stability": "dev",
+  "minimum-stability": "stable",
   "type": "library",
   "require": {
     "php": ">=7.0",
