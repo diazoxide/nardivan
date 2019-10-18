@@ -18,6 +18,9 @@
   "require-dev": {
   },
   "bin": ["bin/nardivan"],
+  "config": {
+    "bin-dir":"bin/"
+  },
   "autoload": {
     "psr-4": {
       "NovemBit\\nardivan\\": "src/"
