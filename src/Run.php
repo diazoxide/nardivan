@@ -284,6 +284,10 @@ html;
                 $target_relative_dir = implode('/', $target_parts);
                 $pwd = getcwd();
 
+                if(!file_exists($target_relative_dir)){
+                    mkdir($target_relative_dir,0777,true);
+                }
+
                 chdir($target_relative_dir);
                 exec('ln -s ' . $dir_relative . ' ' . $target_dir_name);
                 chdir($pwd);
