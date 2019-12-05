@@ -5,20 +5,21 @@
 
   ],
   "license": "GPL-3.0-or-later",
-  "minimum-stability": "dev",
+  "minimum-stability": "stable",
+  "type": "library",
   "require": {
     "php": ">=7.0",
-    "composer/composer": "dev-master",
-    "ext-dom": "*",
-    "ext-libxml": "*",
     "ext-pdo": "*",
     "ext-json": "*",
     "ext-curl": "*",
     "ext-readline": "*",
-    "ext-ssh2": "*",
     "ext-fileinfo": "*"
   },
   "require-dev": {
+  },
+  "bin": ["bin/nardivan"],
+  "config": {
+    "bin-dir":"bin/"
   },
   "autoload": {
     "psr-4": {

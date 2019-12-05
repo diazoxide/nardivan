@@ -1,0 +1,10 @@
+#!/usr/bin/env php
+<?php
+
+use NovemBit\nardivan\Run;
+
+include __DIR__."/../../../autoload.php";
+
+$config = [];
+
+$nardivan = new Run();
