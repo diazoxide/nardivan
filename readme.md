@@ -1,16 +1,17 @@
-# Installation
+# Nardivan local environment creation tool
+
+## Installation
 
 > Installation command.
  
 1. Download and install package
     ```bash
-    sudo wget -O nardivan.tar.gz https://github.com/diazoxide/nardivan/archive/master.tar.gz
-    sudo mkdir -p /var/lib/nardivan
-    sudo rm -rf /var/lib/nardivan/* 
-    sudo tar -xvf nardivan.tar.gz -C /var/lib/nardivan 
-    sudo chmod +x /var/lib/nardivan/nardivan-master/nardivan.sh 
-    sudo mv /var/lib/nardivan/nardivan-master/nardivan.sh /usr/local/bin/nardivan
+   composer global require diazoxide/nardivan:dev-master
     ```
+> If you need to use nardivan as global bash command then you should add composer/vendor/bin directory to your user PATH
+   ```bash
+   export PATH="$PATH:$HOME/.config/composer/vendor/bin"
+   ```
 2. Create `nardivan.json` file on your project root directory
     ```json
     {
@@ -24,7 +25,7 @@
       },
       "environments-scripts": {
         "pre-update": [
-          "echo 'Start global\\n'"
+          "echo 'Start global'"
         ],
         "post-update": [
           "if [ -f \"composer.json\" ]; then composer update; fi;",
@@ -41,10 +42,10 @@
           },
           "scripts": {
             "pre-update": [
-              "echo 'you custom command\\n'"
+              "echo 'you custom command'"
             ],
             "post-update": [
-              "echo 'your custom command 2\\n'"
+              "echo 'your custom command'"
             ]
           }
         }
