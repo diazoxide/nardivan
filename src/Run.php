@@ -244,10 +244,7 @@ html;
 
             $linking = $environment->isLinking() === null ? $this->getConfig()->isLinking() : $environment->isLinking();
 
-            $dir = sprintf('%s/%s',
-                $this->environments_dir,
-                $environment->getName()
-            );
+            $dir = sprintf('%s/%s', $this->getConfig()->getDirectory(), $environment->getTarget());
 
             if (!file_exists($dir)) {
                 mkdir($dir);
@@ -261,6 +258,11 @@ html;
 
                 $target_dir = sprintf('%s/%s',
                     $this->getConfig()->getDirectory(), $environment->getTarget());
+
+                $dir = sprintf('%s/%s',
+                    $this->environments_dir,
+                    $environment->getName()
+                );
 
                 if (!self::deleteFile($target_dir)) {
                     Output::tree("You dont have write access to ($target_dir) directory.", 4, 'error');
