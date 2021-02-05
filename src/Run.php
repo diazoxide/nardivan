@@ -316,10 +316,8 @@ html;
                         if ($ignore_changes) {
                             system(sprintf('git -C %s fetch --all', $dir));
                             system(sprintf("git -C %s reset --hard origin/%s", $dir, $git->getBranch()));
-                        } else {
-                            system(sprintf("git -C %s pull", $dir));
                         }
-
+                        system(sprintf("git -C %s pull", $dir));
                     } else {
                         if (!$ignore_changes && !self::dirIsEmpty($dir)) {
 
