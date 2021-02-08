@@ -100,16 +100,16 @@ html;
         Output::print("=> Installing nardivan: ", false, 'yellow');
 
         if (!file_exists($this->instance_directory) && !is_dir($this->instance_directory)) {
-            mkdir($this->instance_directory);
+            mkdir($this->instance_directory,0777, true);
         }
 
 
         if (!file_exists($this->environments_dir) && !is_dir($this->environments_dir)) {
-            mkdir($this->environments_dir);
+            mkdir($this->environments_dir, 0777, true);
         }
 
         if (!file_exists($this->downloads_dir) && !is_dir($this->downloads_dir)) {
-            mkdir($this->downloads_dir);
+            mkdir($this->downloads_dir, 0777, true);
         }
 
         Output::print("success", true, 'light_green');
@@ -247,7 +247,7 @@ html;
             $dir = sprintf('%s/%s', $this->getConfig()->getDirectory(), $environment->getTarget());
 
             if (!file_exists($dir)) {
-                mkdir($dir);
+                mkdir($dir,0777,true);
             }
 
             /*
