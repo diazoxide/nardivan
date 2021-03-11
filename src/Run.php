@@ -169,7 +169,7 @@ html;
     private static function execCommands($directory, $commands)
     {
         foreach ($commands as $command) {
-            Output::note($command);
+            //Output::note($command);
             self::execCommand($directory, $command);
         }
     }
@@ -297,7 +297,7 @@ html;
             /*
             * Execute pre update scripts
             * */
-            Output::tree("Running pre-update actions", 4, 'blue');
+            Output::tree("pre-update actions", 4, 'blue');
             self::execCommands($dir, array_merge($scripts->getPreUpdate(), $environments_scripts->getPreUpdate()));
 
             /*
@@ -307,7 +307,7 @@ html;
                 $git = $environment->getSource()->getGit();
                 $archive = $environment->getSource()->getArchive();
                 if ($git->isActive()) {
-                    Output::tree("Running git actions", 4, 'blue');
+                    Output::tree("git actions", 4, 'blue');
 
                     if (file_exists($dir.'/.git') && is_dir($dir.'/.git')) {
                         if ($ignore_changes) {
@@ -331,7 +331,7 @@ html;
                         );
                     }
                 } elseif ($archive->isActive()) {
-                    Output::tree("Running Archive actions", 4, 'blue');
+                    Output::tree("Archive actions", 4, 'blue');
 
                     $file_path = $dir.'/'.basename($archive->getPath());
 
@@ -365,7 +365,7 @@ html;
             /*
              * Execute post update scripts
              * */
-            Output::tree("Running post-update actions", 4, 'blue');
+            Output::tree("post-update actions", 4, 'blue');
             self::execCommands($dir, array_merge($scripts->getPostUpdate(), $environments_scripts->getPostUpdate()));
         }
     }
@@ -386,9 +386,10 @@ html;
         }
 
         if($base_dir){
+
             $base_dir = $target.'/'. ltrim($base_dir, '/');
-            system(sprintf('mv {%1$s/*,%1$s/.*} %2$s', $base_dir, $target));
-            //self::removeDirectory($base_dir);
+            system(sprintf('mv %1$s/* %2$s 2>/dev/null && mv %1$s/.* %2$s 2>/dev/null', $base_dir, $target));
+            rmdir($base_dir);
         }
     }
 

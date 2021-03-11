@@ -80,11 +80,11 @@ class Output
         $step = 1,
         $type = "note",
         $arrow_left = "",
-        $symbol = '==',
+        $symbol = '=',
         $arrow_right = '>'
     ) {
         self::print($arrow_left . str_repeat($symbol, $step) . $arrow_right . " ", false, 'light_purple');
-        call_user_func_array([self::class, $type], [$message, 0, 1]);
+        call_user_func_array([self::class, $type], [$message, 0, 0]);
     }
 
     public static function modal(
@@ -129,22 +129,22 @@ class Output
         self::modal($message, 'yellow', '', '', '', '', $before_line, $after_line);
     }
 
-    public static function note($message, $before_line = 1, $after_line = 1)
+    public static function note($message, $before_line = 1, $after_line = 0)
     {
         self::modal($message, 'light_gray', 'Note: ', 'light_purple', '', '', $before_line, $after_line);
     }
 
-    public static function success($message, $before_line = 1, $after_line = 1)
+    public static function success($message, $before_line = 1, $after_line = 0)
     {
         self::modal($message, 'yellow', 'Success: ', 'light_green', '', '', $before_line, $after_line);
     }
 
-    public static function warning($message, $before_line = 1, $after_line = 1)
+    public static function warning($message, $before_line = 1, $after_line = 0)
     {
         self::modal($message, 'light_red', 'Warning: ', 'yellow', '', '', $before_line, $after_line);
     }
 
-    public static function error($message, $before_line = 1, $after_line = 1)
+    public static function error($message, $before_line = 1, $after_line = 0)
     {
         self::modal($message, 'yellow', 'Error: ', 'light_red', '', '', $before_line, $after_line);
     }
