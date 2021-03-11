@@ -44,15 +44,15 @@ html;
         }
 
         $this->pwd = $_SERVER['PWD'];
-        $this->environments_dir = $this->instance_directory . '/environments';
-        $this->downloads_dir = $this->instance_directory . '/downloads';
+        $this->environments_dir = $this->instance_directory.'/environments';
+        $this->downloads_dir = $this->instance_directory.'/downloads';
 
-        if (!file_exists($this->pwd . '/nardivan.json')) {
+        if (!file_exists($this->pwd.'/nardivan.json')) {
             Output::error('nardivan.json not detected');
             return false;
         }
 
-        $json = file_get_contents($this->pwd . '/nardivan.json');
+        $json = file_get_contents($this->pwd.'/nardivan.json');
         $config = json_decode($json, true);
 
         if (json_last_error() != JSON_ERROR_NONE) {
@@ -72,7 +72,6 @@ html;
      */
     private function init()
     {
-
         /*
          * If update command exists
          * */
@@ -100,7 +99,7 @@ html;
         Output::print("=> Installing nardivan: ", false, 'yellow');
 
         if (!file_exists($this->instance_directory) && !is_dir($this->instance_directory)) {
-            mkdir($this->instance_directory,0777, true);
+            mkdir($this->instance_directory, 0777, true);
         }
 
 
@@ -121,10 +120,10 @@ html;
             $objects = scandir($dir);
             foreach ($objects as $object) {
                 if ($object != "." && $object != "..") {
-                    if (is_dir($dir . "/" . $object)) {
-                        self::removeDirectory($dir . "/" . $object);
+                    if (is_dir($dir."/".$object)) {
+                        self::removeDirectory($dir."/".$object);
                     } else {
-                        unlink($dir . "/" . $object);
+                        unlink($dir."/".$object);
                     }
                 }
             }
@@ -165,7 +164,7 @@ html;
 
     /**
      * @param $directory
-     * @param array $commands
+     * @param  array  $commands
      */
     private static function execCommands($directory, $commands)
     {
@@ -192,7 +191,7 @@ html;
      * Update command
      *
      * To update all repos and create symlinks
-     * @param bool $ignore_changes
+     * @param  bool  $ignore_changes
      */
     private function update()
     {
@@ -201,7 +200,6 @@ html;
         $scripts = $this->getConfig()->getScripts();
 
         if ($scripts->isActive()) {
-
             self::execCommands($this->getConfig()->getDirectory(), $scripts->getPreUpdate());
         }
         $this->updateEnvironments();
@@ -215,7 +213,6 @@ html;
      */
     private function updateEnvironments()
     {
-
         Output::tree("Update environments", 2, 'green');
 
         $ignore_changes = in_array('--ignore-changes', $_SERVER['argv'])
@@ -228,8 +225,7 @@ html;
         $environments_scripts = $this->getConfig()->getEnvironmentsScripts();
 
         foreach ($this->getConfig()->getEnvironments() as $index => $environment) {
-
-            Output::tree(($index + 1) . '. ' . $environment->getName(), 3, 'yellow');
+            Output::tree(($index + 1).'. '.$environment->getName(), 3, 'yellow');
 
             if (!$environment->isActive() || (
                     !empty($environment->getSpecialCommandArguments())
@@ -247,7 +243,7 @@ html;
             $dir = sprintf('%s/%s', $this->getConfig()->getDirectory(), $environment->getTarget());
 
             if (!file_exists($dir)) {
-                mkdir($dir,0777,true);
+                mkdir($dir, 0777, true);
             }
 
             /*
@@ -255,11 +251,14 @@ html;
              * Updating environment
              * */
             if ($linking) {
+                $target_dir = sprintf(
+                    '%s/%s',
+                    $this->getConfig()->getDirectory(),
+                    $environment->getTarget()
+                );
 
-                $target_dir = sprintf('%s/%s',
-                    $this->getConfig()->getDirectory(), $environment->getTarget());
-
-                $dir = sprintf('%s/%s',
+                $dir = sprintf(
+                    '%s/%s',
                     $this->environments_dir,
                     $environment->getName()
                 );
@@ -277,7 +276,7 @@ html;
                  * Building backtrace relative path prefix
                  * */
                 $dir_relative_prefix = str_repeat("../", count($target_parts) - 1);
-                $dir_relative = './' . $dir_relative_prefix . $dir . '/';
+                $dir_relative = './'.$dir_relative_prefix.$dir.'/';
 
                 /*
                  * Unset target name from target path to get target directory
@@ -286,12 +285,12 @@ html;
                 $target_relative_dir = implode('/', $target_parts);
                 $pwd = getcwd();
 
-                if(!file_exists($target_relative_dir)){
-                    mkdir($target_relative_dir,0777,true);
+                if (!file_exists($target_relative_dir)) {
+                    mkdir($target_relative_dir, 0777, true);
                 }
 
                 chdir($target_relative_dir);
-                exec('ln -s ' . $dir_relative . ' ' . $target_dir_name);
+                exec('ln -s '.$dir_relative.' '.$target_dir_name);
                 chdir($pwd);
             }
 
@@ -308,11 +307,9 @@ html;
                 $git = $environment->getSource()->getGit();
                 $archive = $environment->getSource()->getArchive();
                 if ($git->isActive()) {
-
                     Output::tree("Running git actions", 4, 'blue');
 
-                    if (file_exists($dir . '/.git') && is_dir($dir . '/.git')) {
-
+                    if (file_exists($dir.'/.git') && is_dir($dir.'/.git')) {
                         if ($ignore_changes) {
                             system(sprintf('git -C %s fetch --all', $dir));
                             system(sprintf("git -C %s reset --hard origin/%s", $dir, $git->getBranch()));
@@ -320,12 +317,13 @@ html;
                         system(sprintf("git -C %s pull", $dir));
                     } else {
                         if (!$ignore_changes && !self::dirIsEmpty($dir)) {
-
-                            Output::tree("The directory (" . $dir . ") is not empty.", 4, 'error');
+                            Output::tree("The directory (".$dir.") is not empty.", 4, 'error');
                             continue;
                         }
 
-                        system(sprintf("git clone -b %s %s %s",
+                        system(
+                            sprintf(
+                                "git clone -b %s %s %s",
                                 $git->getBranch(),
                                 $git->getUrl(),
                                 $dir
@@ -333,10 +331,12 @@ html;
                         );
                     }
                 } elseif ($archive->isActive()) {
-
                     Output::tree("Running Archive actions", 4, 'blue');
 
-                    $file_path = $dir . '/' . basename($archive->getPath());
+                    $file_path = $dir.'/'.basename($archive->getPath());
+
+                    self::removeDirectory($dir);
+                    mkdir($dir,0777,true);
 
                     if ($fh = fopen($file_path, 'w')) {
                         $ch = curl_init();
@@ -350,11 +350,15 @@ html;
                         curl_setopt($ch, CURLOPT_HEADER, 0);
                         curl_setopt($ch, CURLOPT_NOPROGRESS, false);
                         curl_setopt($ch, CURLOPT_FILE, $fh);
+                        curl_setopt($ch, CURLOPT_VERBOSE, false);
                         curl_exec($ch);
                         curl_close($ch);
                         fclose($fh);
                     }
 
+                    self::extractArchive($file_path, $archive->getBaseDir(), $dir);
+
+                    unlink($file_path);
                 }
             }
 
@@ -363,22 +367,31 @@ html;
              * */
             Output::tree("Running post-update actions", 4, 'blue');
             self::execCommands($dir, array_merge($scripts->getPostUpdate(), $environments_scripts->getPostUpdate()));
-
         }
     }
 
-    private static function extractArchive($source, $target)
+    private static function extractArchive($source, $base_dir = null, $target = './')
     {
-
-        if (mime_content_type($source) == "application/x-gzip") {
-
+        $mimetype = mime_content_type($source);
+        $command = null;
+        if ($mimetype === "application/x-gzip") {
             $exclude_str = "";
             $command = "tar zxf \"$source\" -C \"$target\" --checkpoint=1 --checkpoint-action='ttyout=Progress: %s %u files\r' $exclude_str";
+        } elseif ($mimetype === 'application/zip') {
+            $command = sprintf("unzip -q %s -d %s", $source, $target);
+        }
+
+        if ($command) {
             system($command);
         }
 
-
+        if($base_dir){
+            $base_dir = $target.'/'. ltrim($base_dir, '/');
+            system(sprintf('mv {%1$s/*,%1$s/.*} %2$s', $base_dir, $target));
+            //self::removeDirectory($base_dir);
+        }
     }
+
 
     /**
      * Help Command get all commands list
@@ -401,7 +414,7 @@ html;
     }
 
     /**
-     * @param Config $config
+     * @param  Config  $config
      */
     public function setConfig(Config $config)
     {

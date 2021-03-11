@@ -1,0 +1,33 @@
+{
+  "directory": "./html",
+  "linking": false,
+  "scripts": {
+    "pre-update": [
+      "echo 'Nardivan Demo v1.02'"
+    ],
+    "post-update": [
+      "echo 'Finished.'"
+    ],
+    "post-install": [],
+    "pre-install": []
+  },
+  "environments-scripts": {
+    "pre-update": [
+    ],
+    "post-update": [
+      "echo Done."
+    ]
+  },
+  "environments": [
+    {
+      "target": "wp-content/plugins/woocommerce",
+      "name": "woocommerce",
+      "source": {
+        "archive": {
+          "url": "https://downloads.wordpress.org/plugin/woocommerce.zip",
+          "base_dir": "woocommerce"
+        }
+      }
+    }
+  ]
+}

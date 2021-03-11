@@ -8,16 +8,14 @@ class Archive
 {
 
     private $active;
-
     private $url;
-
     private $scheme;
     private $host;
     private $port;
     private $username;
     private $password;
     private $path;
-
+    private $base_dir;
     public function __construct($config)
     {
 
@@ -27,6 +25,7 @@ class Archive
         }
 
         $this->setUrl($config['url'] ?? null);
+        $this->setBaseDir($config['base_dir'] ?? null);
 
         if ($this->getUrl() != null) {
             $parsed = parse_url($this->getUrl());
@@ -174,6 +173,22 @@ class Archive
     public function setScheme($scheme)
     {
         $this->scheme = $scheme;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getBaseDir()
+    {
+        return $this->base_dir;
+    }
+
+    /**
+     * @param  mixed  $base_dir
+     */
+    public function setBaseDir($base_dir)
+    {
+        $this->base_dir = $base_dir;
     }
 
 }
